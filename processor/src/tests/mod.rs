@@ -104,6 +104,163 @@ fn sha256_function_small_sigma_1() {
     assert_eq!(expected_state, last_state);
 }
 
+#[test]
+fn sha256_function_cap_sigma_0() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L57-L63 #
+        proc.cap_sigma_0
+            dup
+            u32rotr.2
+
+            swap
+
+            dup
+            u32rotr.13
+
+            swap
+
+            u32rotr.22
+
+            u32xor
+            u32xor
+        end
+
+        begin
+            exec.cap_sigma_0
+        end",
+    );
+
+    let in_words = [1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [cap_sigma_0(in_words[0] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
+#[test]
+fn sha256_function_cap_sigma_1() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L65-L71 #
+        proc.cap_sigma_1
+            dup
+            u32rotr.6
+
+            swap
+
+            dup
+            u32rotr.11
+
+            swap
+
+            u32rotr.25
+
+            u32xor
+            u32xor
+        end
+
+        begin
+            exec.cap_sigma_1
+        end",
+    );
+
+    let in_words = [1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [cap_sigma_1(in_words[0] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
+#[test]
+fn sha256_function_ch() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L37-L45 #
+        proc.ch
+            swap
+            dup.1
+            u32and
+
+            swap
+            u32not
+
+            movup.2
+            u32and
+
+            u32xor
+        end
+
+        begin
+            exec.ch
+        end",
+    );
+
+    let in_words = [3, 2, 1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [ch(in_words[0] as u32, in_words[1] as u32, in_words[2] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
+#[test]
+fn sha256_function_maj() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L47-L55 #
+        proc.maj
+            dup.1
+            dup.1
+            u32and
+
+            swap
+            dup.3
+            u32and
+
+            movup.2
+            movup.3
+            u32and
+
+            u32xor
+            u32xor
+        end
+
+        begin
+            exec.maj
+        end",
+    );
+
+    let in_words = [3, 2, 1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [maj(in_words[0] as u32, in_words[1] as u32, in_words[2] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
 // HELPER FUNCTIONS
 // ================================================================================================
 
@@ -247,6 +404,30 @@ fn small_sigma_0(x: u32) -> u32 {
 #[inline]
 fn small_sigma_1(x: u32) -> u32 {
     rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L57-L63
+#[inline]
+fn cap_sigma_0(x: u32) -> u32 {
+    rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L65-L71
+#[inline]
+fn cap_sigma_1(x: u32) -> u32 {
+    rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L37-L45
+#[inline]
+fn ch(x: u32, y: u32, z: u32) -> u32 {
+    (x & y) ^ (!x & z)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L47-L55
+#[inline]
+fn maj(x: u32, y: u32, z: u32) -> u32 {
+    (x & y) ^ (x & z) ^ (y & z)
 }
 
 /// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113
