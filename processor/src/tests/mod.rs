@@ -261,6 +261,281 @@ fn sha256_function_maj() {
     assert_eq!(expected_state, last_state);
 }
 
+#[test]
+fn sha256_prepare_message_schedule() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L73-L79 #
+        proc.small_sigma_0
+            dup
+            u32rotr.7
+
+            swap
+
+            dup
+            u32rotr.18
+
+            swap
+
+            u32shr.3
+
+            u32xor
+            u32xor
+        end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L81-L87 #
+        proc.small_sigma_1
+            dup
+            u32rotr.17
+
+            swap
+
+            dup
+            u32rotr.19
+
+            swap
+
+            u32shr.10
+
+            u32xor
+            u32xor
+        end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
+        proc.prepare_message_schedule.2
+            # compute message schedule msg[16] #
+            dup.14
+            exec.small_sigma_1
+
+            dup.10
+            u32add.unsafe
+            drop
+
+            dup.2
+            exec.small_sigma_0
+
+            dup.2
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            popw.local.0
+
+            # compute message schedule msg[17] #
+            dup.12
+            exec.small_sigma_1
+
+            dup.8
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+
+            dup.3
+            exec.small_sigma_0
+
+            dup.3
+            u32add.unsafe
+            drop
+
+            movup.5
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[18] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            dup.6
+            exec.small_sigma_0
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[19] #
+            dup.1
+            exec.small_sigma_1
+
+            popw.local.0
+            dup.12
+            pushw.local.0
+
+            movup.4
+            u32add.unsafe
+            drop
+
+            dup.8
+            exec.small_sigma_0
+
+            dup.8
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[20] #
+            dup.1
+            movdn.4
+
+            popw.local.0
+            exec.small_sigma_1
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            dup.6
+            exec.small_sigma_0
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[21] #
+            dup.1
+            exec.small_sigma_1
+
+            movdn.4
+            popw.local.0
+            movdn.4
+            popw.local.1
+
+            dup.12
+            u32add.unsafe
+            drop
+            
+            dup.4
+            exec.small_sigma_0
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            movup.4
+
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[22] #
+            dup.1
+            exec.small_sigma_1
+
+            movdn.4
+            popw.local.0
+            movdn.4
+            popw.local.1
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            dup.6
+            exec.small_sigma_0
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            movup.4
+
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[23] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            movdn.4
+            popw.local.0
+            movdn.4
+            popw.local.1
+
+            dup.8
+            exec.small_sigma_0
+
+            dup.8
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            movup.4
+
+            pushw.local.0
+            movup.4
+        end
+
+        begin
+            exec.prepare_message_schedule
+        end",
+    );
+
+    let in_words = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let mut msg_words = in_words;
+    msg_words.reverse();
+
+    let mut out_words = [0; STACK_TOP_SIZE << 2];
+    prepare_message_schedule(&msg_words, &mut out_words);
+
+    let expected_state = convert_to_stack(&[
+        out_words[23],
+        out_words[22],
+        out_words[21],
+        out_words[20],
+        out_words[19],
+        out_words[18],
+        out_words[17],
+        out_words[16],
+        out_words[0],
+        out_words[1],
+        out_words[2],
+        out_words[3],
+        out_words[4],
+        out_words[5],
+        out_words[6],
+        out_words[7],
+    ]);
+
+    assert_eq!(expected_state, last_state);
+}
+
 // HELPER FUNCTIONS
 // ================================================================================================
 
@@ -437,9 +712,9 @@ fn prepare_message_schedule(in_words: &[u64], out_words: &mut [u64]) {
     }
 
     for i in 16..64 {
-        let t0: u32 = small_sigma_1(out_words[i - 2] as u32) + out_words[i - 7] as u32;
-        let t1: u32 = small_sigma_0(out_words[i - 15] as u32) + out_words[i - 16] as u32;
+        let t0 = small_sigma_1(out_words[i - 2] as u32).wrapping_add(out_words[i - 7] as u32);
+        let t1 = small_sigma_0(out_words[i - 15] as u32).wrapping_add(out_words[i - 16] as u32);
 
-        out_words[i] = (t0 + t1) as u64;
+        out_words[i] = t0.wrapping_add(t1) as u64;
     }
 }
