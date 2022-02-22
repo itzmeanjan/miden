@@ -24,6 +24,86 @@ fn simple_program() {
     assert_eq!(expected_state, last_state);
 }
 
+#[test]
+fn sha256_function_small_sigma_0() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L73-L79 #
+        proc.small_sigma_0
+            dup
+            u32rotr.7
+
+            swap
+
+            dup
+            u32rotr.18
+
+            swap
+
+            u32shr.3
+
+            u32xor
+            u32xor
+        end
+
+        begin
+            exec.small_sigma_0
+        end",
+    );
+
+    let in_words = [1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [small_sigma_0(in_words[0] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
+#[test]
+fn sha256_function_small_sigma_1() {
+    let script = compile(
+        "
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L81-L87 #
+        proc.small_sigma_1
+            dup
+            u32rotr.17
+
+            swap
+
+            dup
+            u32rotr.19
+
+            swap
+
+            u32shr.10
+
+            u32xor
+            u32xor
+        end
+
+        begin
+            exec.small_sigma_1
+        end",
+    );
+
+    let in_words = [1];
+
+    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    let trace = super::execute(&script, &inputs).unwrap();
+
+    let last_state = trace.last_stack_state();
+
+    let out_words = [small_sigma_1(in_words[0] as u32) as u64];
+    let expected_state = convert_to_stack(&out_words);
+
+    assert_eq!(expected_state, last_state);
+}
+
 // HELPER FUNCTIONS
 // ================================================================================================
 
@@ -149,4 +229,36 @@ fn test_param_out_of_bounds(asm_op_base: &str, gt_max_value: u64) {
 // This is a proptest strategy for generating a random word with 4 values of type T.
 fn rand_word<T: proptest::arbitrary::Arbitrary>() -> impl Strategy<Value = Vec<T>> {
     prop::collection::vec(any::<T>(), 4)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/utils.hpp#L4-L14
+#[inline]
+fn rotr(x: u32, n: usize) -> u32 {
+    (x >> n) | (x << (32 - n))
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L73-L79
+#[inline]
+fn small_sigma_0(x: u32) -> u32 {
+    rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L81-L87
+#[inline]
+fn small_sigma_1(x: u32) -> u32 {
+    rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10)
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113
+fn prepare_message_schedule(in_words: &[u64], out_words: &mut [u64]) {
+    for i in 0..16 {
+        out_words[i] = in_words[i];
+    }
+
+    for i in 16..64 {
+        let t0: u32 = small_sigma_1(out_words[i - 2] as u32) + out_words[i - 7] as u32;
+        let t1: u32 = small_sigma_0(out_words[i - 15] as u32) + out_words[i - 16] as u32;
+
+        out_words[i] = (t0 + t1) as u64;
+    }
 }
