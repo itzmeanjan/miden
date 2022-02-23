@@ -302,7 +302,7 @@ fn sha256_prepare_message_schedule() {
         end
 
         # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
-        proc.prepare_message_schedule.2
+        proc.prepare_message_schedule.5
             # compute message schedule msg[16] #
             dup.14
             exec.small_sigma_1
@@ -494,6 +494,194 @@ fn sha256_prepare_message_schedule() {
 
             pushw.local.0
             movup.4
+
+            # compute message schedule msg[24] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            movdn.4
+            popw.local.0
+            
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[25] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            movdn.4
+            popw.local.0
+            movdn.4
+            popw.local.1
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+            
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            movup.4
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[26] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            movdn.4
+            popw.local.0
+            movdn.4
+            popw.local.1
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            movup.4
+            pushw.local.0
+            movup.4
+
+            # compute message schedule msg[27] #
+            dup.1
+            exec.small_sigma_1
+
+            movupw.3
+            popw.local.0 # holds message schedule msg[0, 1, 2, 3] #
+            movupw.3
+            popw.local.1 # holds message schedule msg[4, 5, 6, 7] #
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            movupw.2
+            popw.local.2 # holds message schedule msg[19, 18, 17, 16] #
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[28] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[29] #
+            movupw.2
+            popw.local.3 # holds message schedule msg[20, 8, 9, 10] #
+
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[30] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[31] #
+            dup.1
+            exec.small_sigma_1
+
+            movupw.2
+            popw.local.4 # holds message schedule msg[23, 22, 21, 11] #
+
+            dup.7
+            u32add.unsafe
+            drop
+
+            dup.11
+
+            pushw.local.2
+            dup.3
+            exec.small_sigma_0
+
+            movup.5
+            u32add.unsafe
+            drop
+
+            movup.5
+            u32add.unsafe
+            drop
         end
 
         begin
@@ -515,22 +703,22 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
-        out_words[23],
-        out_words[22],
-        out_words[21],
-        out_words[20],
+        out_words[31],
         out_words[19],
         out_words[18],
         out_words[17],
         out_words[16],
-        out_words[0],
-        out_words[1],
-        out_words[2],
-        out_words[3],
-        out_words[4],
-        out_words[5],
-        out_words[6],
-        out_words[7],
+        out_words[30],
+        out_words[29],
+        out_words[28],
+        out_words[27],
+        out_words[26],
+        out_words[25],
+        out_words[24],
+        out_words[12],
+        out_words[13],
+        out_words[14],
+        out_words[15],
     ]);
 
     assert_eq!(expected_state, last_state);
