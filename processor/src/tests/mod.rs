@@ -309,7 +309,7 @@ fn sha256_prepare_message_schedule() {
         end
 
         # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
-        proc.prepare_message_schedule.8
+        proc.prepare_message_schedule.10
             # compute message schedule msg[16] #
             dup.14
             exec.small_sigma_1
@@ -1045,6 +1045,188 @@ fn sha256_prepare_message_schedule() {
             drop
 
             exec.rev_element_order
+
+            movupw.3
+            popw.local.7 # -> holds message schedule msg[28, 29, 30, 31] #
+
+            swapw
+            movupw.3
+            movupw.2
+            movupw.3
+
+            # compute message schedule msg[48] #
+            dup.6
+            exec.small_sigma_1
+
+            dup.2
+            u32add.unsafe
+            drop
+
+            dup.10
+            exec.small_sigma_0
+
+            dup.10
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[49] #
+            dup.8
+            exec.small_sigma_1
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[50] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[51] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.8
+            u32add.unsafe
+            drop
+
+            popw.local.8 # -> holds message schedule msg[t0, 50, 49, 48] #
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            pushw.local.8 # <- holds message schedule msg[t0, 50, 49, 48] #
+
+            movup.4
+            u32add.unsafe
+            drop
+
+            exec.rev_element_order
+
+            movupw.3
+            popw.local.8 # -> holds message schedule msg[32, 33, 34, 35] #
+
+            swapw
+            movupw.3
+            movupw.2
+            movupw.3
+
+            # compute message schedule msg[52] #
+            dup.6
+            exec.small_sigma_1
+
+            dup.2
+            u32add.unsafe
+            drop
+
+            dup.10
+            exec.small_sigma_0
+
+            dup.10
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[53] #
+            dup.8
+            exec.small_sigma_1
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[54] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[55] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.8
+            u32add.unsafe
+            drop
+
+            popw.local.9 # -> holds message schedule msg[t0, 54, 53, 52] #
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            pushw.local.9 # <- holds message schedule msg[t0, 54, 53, 52] #
+
+            movup.4
+            u32add.unsafe
+            drop
+
+            exec.rev_element_order
+
+            movupw.3
+            popw.local.9 # -> holds message schedule msg[36, 37, 38, 39] #
+
+            swapw
+            movupw.3
+            movupw.2
+            movupw.3
         end
 
         begin
@@ -1066,30 +1248,25 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
-        out_words[44],
-        out_words[45],
-        out_words[46],
-        out_words[47],
+        out_words[48],
+        out_words[49],
+        out_words[50],
+        out_words[51],
 
-        out_words[36],
-        out_words[37],
-        out_words[38],
-        out_words[39],
+        out_words[52],
+        out_words[53],
+        out_words[54],
+        out_words[55],
 
         out_words[40],
         out_words[41],
         out_words[42],
         out_words[43],
 
-        out_words[28],
-        out_words[29],
-        out_words[30],
-        out_words[31],
-
-        out_words[32],
-        out_words[33],
-        out_words[34],
-        out_words[35],
+        out_words[44],
+        out_words[45],
+        out_words[46],
+        out_words[47],
     ]);
 
     assert_eq!(expected_state, last_state);
