@@ -309,7 +309,7 @@ fn sha256_prepare_message_schedule() {
         end
 
         # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
-        proc.prepare_message_schedule.6
+        proc.prepare_message_schedule.8
             # compute message schedule msg[16] #
             dup.14
             exec.small_sigma_1
@@ -876,6 +876,175 @@ fn sha256_prepare_message_schedule() {
 
             exec.rev_element_order
             swap
+
+            # compute message schedule msg[40] #
+            movupw.3
+            popw.local.5 # -> holds message schedule msg[20, 21, 22, 23] #
+
+            swapw
+            movupw.3
+            movupw.2
+            movupw.3
+
+            dup.6
+            exec.small_sigma_1
+
+            dup.2
+            u32add.unsafe
+            drop
+
+            dup.10
+            exec.small_sigma_0
+
+            dup.10
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[41] #
+            dup.8
+            exec.small_sigma_1
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[42] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[43] #
+            dup.14
+            movupw.3
+            popw.local.6 # -> holds message schedule msg[24, 25, 26, 27] #
+
+            dup.2
+            exec.small_sigma_1
+
+            dup.9
+            u32add.unsafe
+            drop
+
+            dup.13
+            exec.small_sigma_0
+
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            exec.rev_element_order
+
+            # compute message schedule msg[44] #
+            swapw
+            movupw.3
+            movupw.2
+            movupw.3
+
+            dup.6
+            exec.small_sigma_1
+
+            dup.2
+            u32add.unsafe
+            drop
+
+            dup.10
+            exec.small_sigma_0
+
+            dup.10
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[45] #
+            dup.8
+            exec.small_sigma_1
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[46] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            dup.14
+            u32add.unsafe
+            drop
+
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[47] #
+            dup.1
+            exec.small_sigma_1
+            
+            dup.8
+            u32add.unsafe
+            drop
+
+            popw.local.7 # -> holds message schedule msg[t0, 46, 45, 44] #
+
+            dup.12
+            exec.small_sigma_0
+
+            dup.12
+            u32add.unsafe
+            drop
+
+            pushw.local.7 # <- holds message schedule msg[t0, 46, 45, 44] #
+
+            movup.4
+            u32add.unsafe
+            drop
+
+            exec.rev_element_order
         end
 
         begin
@@ -897,26 +1066,30 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
+        out_words[44],
+        out_words[45],
+        out_words[46],
+        out_words[47],
+
         out_words[36],
         out_words[37],
         out_words[38],
         out_words[39],
+
+        out_words[40],
+        out_words[41],
+        out_words[42],
+        out_words[43],
+
         out_words[28],
         out_words[29],
         out_words[30],
         out_words[31],
+
         out_words[32],
         out_words[33],
         out_words[34],
         out_words[35],
-        out_words[20],
-        out_words[21],
-        out_words[22],
-        out_words[23],
-        out_words[24],
-        out_words[25],
-        out_words[26],
-        out_words[27],
     ]);
 
     assert_eq!(expected_state, last_state);
