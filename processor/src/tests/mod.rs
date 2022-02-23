@@ -300,6 +300,13 @@ fn sha256_prepare_message_schedule() {
             u32xor
             u32xor
         end
+        
+        # assume top 4 elements of stack are [3, 2, 1, 0, ...], then after execution of this function, stack should look like [0, 1, 2, 3, ...] #
+        proc.rev_element_order
+            swap
+            movup.2
+            movup.3
+        end
 
         # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
         proc.prepare_message_schedule.5
@@ -580,16 +587,16 @@ fn sha256_prepare_message_schedule() {
             exec.small_sigma_1
 
             movupw.3
-            popw.local.0 # holds message schedule msg[0, 1, 2, 3] #
+            popw.local.0 # -> holds message schedule msg[0, 1, 2, 3] #
             movupw.3
-            popw.local.1 # holds message schedule msg[4, 5, 6, 7] #
+            popw.local.1 # -> holds message schedule msg[4, 5, 6, 7] #
 
             dup.7
             u32add.unsafe
             drop
 
             movupw.2
-            popw.local.2 # holds message schedule msg[19, 18, 17, 16] #
+            popw.local.2 # -> holds message schedule msg[19, 18, 17, 16] #
 
             dup.12
             exec.small_sigma_0
@@ -621,7 +628,7 @@ fn sha256_prepare_message_schedule() {
 
             # compute message schedule msg[29] #
             movupw.2
-            popw.local.3 # holds message schedule msg[20, 8, 9, 10] #
+            popw.local.3 # -> holds message schedule msg[20, 8, 9, 10] #
 
             dup.1
             exec.small_sigma_1
@@ -663,7 +670,7 @@ fn sha256_prepare_message_schedule() {
             exec.small_sigma_1
 
             movupw.2
-            popw.local.4 # holds message schedule msg[23, 22, 21, 11] #
+            popw.local.4 # -> holds message schedule msg[23, 22, 21, 11] #
 
             dup.7
             u32add.unsafe
@@ -671,7 +678,7 @@ fn sha256_prepare_message_schedule() {
 
             dup.11
 
-            pushw.local.2
+            pushw.local.2 # <- holds message schedule msg[19, 18, 17, 16] #
             dup.3
             exec.small_sigma_0
 
@@ -682,6 +689,26 @@ fn sha256_prepare_message_schedule() {
             movup.5
             u32add.unsafe
             drop
+
+            # stack reorg #
+            movdn.4
+            exec.rev_element_order
+            swapw.1
+            exec.rev_element_order
+            movupw.2
+            exec.rev_element_order
+            pushw.local.4 # <- holds message schedule msg[23, 22, 21, 11] #
+            pushw.local.3 # <- holds message schedule msg[20, 8, 9, 10] #
+            exec.rev_element_order
+            movup.7
+            exec.rev_element_order
+            popw.local.2 # -> holds message schedule msg[8, 9, 10, 11] #
+            exec.rev_element_order
+            movup.3
+            popw.local.4 # -> holds message schedule msg[20, 21, 22, 23] #
+            movupw.3
+            popw.local.3 # -> holds message schedule msg[12, 13, 14, 15] #
+            pushw.local.4 # <- holds message schedule msg[20, 21, 22, 23] #
         end
 
         begin
@@ -703,22 +730,22 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
-        out_words[31],
-        out_words[19],
-        out_words[18],
-        out_words[17],
-        out_words[16],
-        out_words[30],
-        out_words[29],
-        out_words[28],
-        out_words[27],
-        out_words[26],
-        out_words[25],
+        out_words[20],
+        out_words[21],
+        out_words[22],
+        out_words[23],
         out_words[24],
-        out_words[12],
-        out_words[13],
-        out_words[14],
-        out_words[15],
+        out_words[25],
+        out_words[26],
+        out_words[27],
+        out_words[28],
+        out_words[29],
+        out_words[30],
+        out_words[31],
+        out_words[16],
+        out_words[17],
+        out_words[18],
+        out_words[19],
     ]);
 
     assert_eq!(expected_state, last_state);
