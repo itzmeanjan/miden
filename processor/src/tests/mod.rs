@@ -308,584 +308,8 @@ fn sha256_prepare_message_schedule() {
             movup.3
         end
 
-        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
-        proc.prepare_message_schedule.12
-            # compute message schedule msg[16] #
-            dup.14
-            exec.small_sigma_1
-
-            dup.10
-            u32add.unsafe
-            drop
-
-            dup.2
-            exec.small_sigma_0
-
-            dup.2
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            popw.local.0
-
-            # compute message schedule msg[17] #
-            dup.12
-            exec.small_sigma_1
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            pushw.local.0
-
-            dup.3
-            exec.small_sigma_0
-
-            dup.3
-            u32add.unsafe
-            drop
-
-            movup.5
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[18] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            dup.6
-            exec.small_sigma_0
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[19] #
-            dup.1
-            exec.small_sigma_1
-
-            popw.local.0
-            dup.12
-            pushw.local.0
-
-            movup.4
-            u32add.unsafe
-            drop
-
-            dup.8
-            exec.small_sigma_0
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[20] #
-            dup.1
-            movdn.4
-
-            popw.local.0
-            exec.small_sigma_1
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            dup.6
-            exec.small_sigma_0
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[21] #
-            dup.1
-            exec.small_sigma_1
-
-            movdn.4
-            popw.local.0
-            movdn.4
-            popw.local.1
-
-            dup.12
-            u32add.unsafe
-            drop
-            
-            dup.4
-            exec.small_sigma_0
-
-            dup.4
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.1
-            movup.4
-
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[22] #
-            dup.1
-            exec.small_sigma_1
-
-            movdn.4
-            popw.local.0
-            movdn.4
-            popw.local.1
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            dup.6
-            exec.small_sigma_0
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.1
-            movup.4
-
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[23] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            movdn.4
-            popw.local.0
-            movdn.4
-            popw.local.1
-
-            dup.8
-            exec.small_sigma_0
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.1
-            movup.4
-
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[24] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            movdn.4
-            popw.local.0
-            
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[25] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            movdn.4
-            popw.local.0
-            movdn.4
-            popw.local.1
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-            
-            u32add.unsafe
-            drop
-
-            pushw.local.1
-            movup.4
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[26] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            movdn.4
-            popw.local.0
-            movdn.4
-            popw.local.1
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pushw.local.1
-            movup.4
-            pushw.local.0
-            movup.4
-
-            # compute message schedule msg[27] #
-            dup.1
-            exec.small_sigma_1
-
-            movupw.3
-            popw.local.0 # -> holds message schedule msg[0, 1, 2, 3] #
-            movupw.3
-            popw.local.1 # -> holds message schedule msg[4, 5, 6, 7] #
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            movupw.2
-            popw.local.2 # -> holds message schedule msg[19, 18, 17, 16] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[28] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[29] #
-            movupw.2
-            popw.local.3 # -> holds message schedule msg[20, 8, 9, 10] #
-
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[30] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[31] #
-            dup.1
-            exec.small_sigma_1
-
-            movupw.2
-            popw.local.4 # -> holds message schedule msg[23, 22, 21, 11] #
-
-            dup.7
-            u32add.unsafe
-            drop
-
-            dup.11
-
-            pushw.local.2 # <- holds message schedule msg[19, 18, 17, 16] #
-            dup.3
-            exec.small_sigma_0
-
-            movup.5
-            u32add.unsafe
-            drop
-
-            movup.5
-            u32add.unsafe
-            drop
-
-            # stack reorg #
-            movdn.4
-            exec.rev_element_order
-            swapw.1
-            exec.rev_element_order
-            movupw.2
-            exec.rev_element_order
-            pushw.local.4 # <- holds message schedule msg[23, 22, 21, 11] #
-            pushw.local.3 # <- holds message schedule msg[20, 8, 9, 10] #
-            exec.rev_element_order
-            movup.7
-            exec.rev_element_order
-            popw.local.2 # -> holds message schedule msg[8, 9, 10, 11] #
-            exec.rev_element_order
-            movup.3
-            popw.local.4 # -> holds message schedule msg[20, 21, 22, 23] #
-            movupw.3
-            popw.local.3 # -> holds message schedule msg[12, 13, 14, 15] #
-            pushw.local.4 # <- holds message schedule msg[20, 21, 22, 23] #
-
-            # compute message schedule msg[32] #
-            dup.10
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            pop.local.4 # -> holds message schedule msg[32], 0, 0, 0 #
-            movupw.3
-
-            # compute message schedule msg[33] #
-            dup.15
-            exec.small_sigma_1
-
-            dup.11
-            u32add.unsafe
-            drop
-
-            dup.3
-            exec.small_sigma_0
-
-            dup.3
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[34] #
-            push.local.4 # <- holds message schedule msg[32], 0, 0, 0 #
-            dup
-            exec.small_sigma_1
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            dup.6
-            exec.small_sigma_0
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[35] #
-            dup.6
-            swapw
-            popw.local.4 # -> holds message schedule msg[16, 17, 18, 19] #
-
-            dup.3
-            exec.small_sigma_1
-
-            dup.13
-            u32add.unsafe
-            drop
-
-            dup.5
-            exec.small_sigma_0
-
-            u32add.unsafe
-            drop
-            
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-            swap
-
-            # compute message schedule msg[36] #
-            dup.2
-            exec.small_sigma_1
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            dup.6
-            exec.small_sigma_0
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[37] #
-            pop.local.5 # -> holds message schedule msg[36], 0, 0, 0 #
-            movupw.3
-
-            dup.7
-            exec.small_sigma_1
-
-            dup.3
-            u32add.unsafe
-            drop
-
-            dup.11
-            exec.small_sigma_0
-
-            dup.11
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-            push.local.5 # <- holds message schedule msg[36], 0, 0, 0 #
-
-            # compute message schedule msg[38] #
-            dup
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[39] #
-            dup.2
-            exec.small_sigma_1
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            popw.local.5 # -> holds message schedule msg[t0, 38, 36, 37] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            pushw.local.5 # <- holds message schedule msg[t0, 38, 36, 37] #
-
-            movup.4
-            
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-            swap
-
-            # compute message schedule msg[40] #
-            movupw.3
-            popw.local.5 # -> holds message schedule msg[20, 21, 22, 23] #
-
-            swapw
-            movupw.3
-            movupw.2
-            movupw.3
-
+        proc.gen_four_message_words.1
+            # compute message schedule msg[a + 0] | a % 4 == 0 #
             dup.6
             exec.small_sigma_1
 
@@ -896,140 +320,58 @@ fn sha256_prepare_message_schedule() {
             dup.10
             exec.small_sigma_0
 
-            dup.10
             u32add.unsafe
             drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[41] #
-            dup.8
-            exec.small_sigma_1
-
-            dup.4
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[42] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[43] #
-            dup.14
-            movupw.3
-            popw.local.6 # -> holds message schedule msg[24, 25, 26, 27] #
-
-            dup.2
-            exec.small_sigma_1
 
             dup.9
             u32add.unsafe
             drop
 
+            # compute message schedule msg[a + 1] #
+            dup.8
+            exec.small_sigma_1
+
+            dup.4
+            u32add.unsafe
+            drop
+
+            dup.12
+            exec.small_sigma_0
+
+            u32add.unsafe
+            drop
+
+            dup.11
+            u32add.unsafe
+            drop
+
+            # compute message schedule msg[a + 2] #
+            dup.1
+            exec.small_sigma_1
+
+            dup.6
+            u32add.unsafe
+            drop
+
+            dup.14
+            exec.small_sigma_0
+
+            u32add.unsafe
+            drop
+
             dup.13
-            exec.small_sigma_0
-
             u32add.unsafe
             drop
-
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-
-            # compute message schedule msg[44] #
-            swapw
-            movupw.3
-            movupw.2
-            movupw.3
-
-            dup.6
-            exec.small_sigma_1
-
-            dup.2
-            u32add.unsafe
-            drop
-
-            dup.10
-            exec.small_sigma_0
-
-            dup.10
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[45] #
-            dup.8
-            exec.small_sigma_1
-
-            dup.4
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[46] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[47] #
-            dup.1
-            exec.small_sigma_1
             
+            # compute message schedule msg[a + 3] #
+            dup.1
+            exec.small_sigma_1
+
             dup.8
             u32add.unsafe
             drop
 
-            popw.local.7 # -> holds message schedule msg[t0, 46, 45, 44] #
+            popw.local.0
 
             dup.12
             exec.small_sigma_0
@@ -1038,368 +380,281 @@ fn sha256_prepare_message_schedule() {
             u32add.unsafe
             drop
 
-            pushw.local.7 # <- holds message schedule msg[t0, 46, 45, 44] #
-
+            pushw.local.0
             movup.4
+
             u32add.unsafe
             drop
 
+            # stack = [a + 3, a + 2, a + 1, a + 0, ...] #
             exec.rev_element_order
+            # stack = [a + 0, a + 1, a + 2, a + 3, ...] #
+        end
 
-            movupw.3
-            popw.local.7 # -> holds message schedule msg[28, 29, 30, 31] #
-
+        proc.reorder_stack_words
             swapw
             movupw.3
             movupw.2
             movupw.3
+        end
 
-            # compute message schedule msg[48] #
-            dup.6
-            exec.small_sigma_1
-
-            dup.2
-            u32add.unsafe
-            drop
-
-            dup.10
-            exec.small_sigma_0
-
-            dup.10
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[49] #
-            dup.8
-            exec.small_sigma_1
-
-            dup.4
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[50] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[51] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            popw.local.8 # -> holds message schedule msg[t0, 50, 49, 48] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            pushw.local.8 # <- holds message schedule msg[t0, 50, 49, 48] #
-
-            movup.4
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113 #
+        proc.prepare_message_schedule.5
+            popw.local.0
+            popw.local.1
+            popw.local.2
+            popw.local.3
 
             movupw.3
-            popw.local.8 # -> holds message schedule msg[32, 33, 34, 35] #
-
-            swapw
             movupw.3
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
             movupw.2
-            movupw.3
 
-            # compute message schedule msg[52] #
-            dup.6
-            exec.small_sigma_1
+            pushw.local.0
+            repeat.3
+                swap
+                drop
+            end
 
-            dup.2
-            u32add.unsafe
-            drop
+            popw.mem # write to mem msg[0, 1, 2, 3] #
+            pushw.local.4
 
-            dup.10
-            exec.small_sigma_0
+            exec.reorder_stack_words
+            
+            # --- #
 
-            dup.10
-            u32add.unsafe
-            drop
+            exec.gen_four_message_words
 
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[53] #
-            dup.8
-            exec.small_sigma_1
-
-            dup.4
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[54] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[55] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            popw.local.9 # -> holds message schedule msg[t0, 54, 53, 52] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            pushw.local.9 # <- holds message schedule msg[t0, 54, 53, 52] #
-
-            movup.4
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-
-            movupw.3
-            popw.local.9 # -> holds message schedule msg[36, 37, 38, 39] #
-
-            swapw
-            movupw.3
+            popw.local.4
             movupw.2
-            movupw.3
 
-            # compute message schedule msg[56] #
-            dup.6
-            exec.small_sigma_1
-
-            dup.2
-            u32add.unsafe
+            pushw.local.0
             drop
+            repeat.2
+                swap
+                drop
+            end
 
-            dup.10
-            exec.small_sigma_0
+            popw.mem # write to mem msg[4, 5, 6, 7] #
+            pushw.local.4
 
-            dup.10
-            u32add.unsafe
-            drop
+            exec.reorder_stack_words
 
-            u32add.unsafe
-            drop
+            # --- #
 
-            # compute message schedule msg[57] #
-            dup.8
-            exec.small_sigma_1
+            exec.gen_four_message_words
 
-            dup.4
-            u32add.unsafe
-            drop
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[58] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.6
-            u32add.unsafe
-            drop
-
-            dup.14
-            exec.small_sigma_0
-
-            dup.14
-            u32add.unsafe
-            drop
-
-            u32add.unsafe
-            drop
-
-            # compute message schedule msg[59] #
-            dup.1
-            exec.small_sigma_1
-
-            dup.8
-            u32add.unsafe
-            drop
-
-            popw.local.10 # -> holds message schedule msg[t0, 58, 57, 56] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            pushw.local.10 # <- holds message schedule msg[t0, 58, 57, 56] #
-
-            movup.4
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-
-            movupw.3
-            popw.local.10 # -> holds message schedule msg[40, 41, 42, 43] #
-
-            swapw
-            movupw.3
+            popw.local.4
             movupw.2
-            movupw.3
 
-            # compute message schedule msg[60] #
-            dup.6
-            exec.small_sigma_1
-
-            dup.2
-            u32add.unsafe
+            pushw.local.0
+            drop
+            drop
+            swap
             drop
 
-            dup.10
-            exec.small_sigma_0
+            popw.mem # write to mem msg[8, 9, 10, 11] #
+            pushw.local.4
 
-            dup.10
-            u32add.unsafe
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.0
+            drop
+            drop
             drop
 
-            u32add.unsafe
+            popw.mem # write to mem msg[12, 13, 14, 15] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.1
+            repeat.3
+                swap
+                drop
+            end
+
+            popw.mem # write to mem msg[16, 17, 18, 19] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.1
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            popw.mem # write to mem msg[20, 21, 22, 23] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.1
+            drop
+            drop
+            swap
             drop
 
-            # compute message schedule msg[61] #
-            dup.8
-            exec.small_sigma_1
+            popw.mem # write to mem msg[24, 25, 26, 27] #
+            pushw.local.4
 
-            dup.4
-            u32add.unsafe
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.1
+            drop
+            drop
             drop
 
-            dup.12
-            exec.small_sigma_0
+            popw.mem # write to mem msg[28, 29, 30, 31] #
+            pushw.local.4
 
-            dup.12
-            u32add.unsafe
+            exec.reorder_stack_words
+
+            # --- #
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.2
+            repeat.3
+                swap
+                drop
+            end
+
+            popw.mem # write to mem msg[32, 33, 34, 35] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.2
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            popw.mem # write to mem msg[36, 37, 38, 39] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.2
+            drop
+            drop
+            swap
             drop
 
-            u32add.unsafe
+            popw.mem # write to mem msg[40, 41, 42, 43] #
+            pushw.local.4
+
+            exec.reorder_stack_words
+
+            # --- #
+
+            exec.gen_four_message_words
+
+            popw.local.4
+            movupw.2
+
+            pushw.local.2
+            drop
+            drop
             drop
 
-            # compute message schedule msg[62] #
-            dup.1
-            exec.small_sigma_1
+            popw.mem # write to mem msg[44, 45, 46, 47] #
+            pushw.local.4
 
-            dup.6
-            u32add.unsafe
-            drop
+            exec.reorder_stack_words
 
-            dup.14
-            exec.small_sigma_0
+            # --- #
+        end
 
-            dup.14
-            u32add.unsafe
-            drop
+        proc.wrapper.16
+            push.env.locaddr.15
+            push.env.locaddr.14
+            push.env.locaddr.13
+            push.env.locaddr.12
 
-            u32add.unsafe
-            drop
+            push.env.locaddr.11
+            push.env.locaddr.10
+            push.env.locaddr.9
+            push.env.locaddr.8
 
-            # compute message schedule msg[63] #
-            dup.1
-            exec.small_sigma_1
+            push.env.locaddr.7
+            push.env.locaddr.6
+            push.env.locaddr.5
+            push.env.locaddr.4
 
-            dup.8
-            u32add.unsafe
-            drop
+            push.env.locaddr.3
+            push.env.locaddr.2
+            push.env.locaddr.1
+            push.env.locaddr.0
 
-            popw.local.11 # -> holds message schedule msg[t0, 62, 61, 60] #
-
-            dup.12
-            exec.small_sigma_0
-
-            dup.12
-            u32add.unsafe
-            drop
-
-            pushw.local.11 # <- holds message schedule msg[t0, 62, 61, 60] #
-
-            movup.4
-            u32add.unsafe
-            drop
-
-            exec.rev_element_order
-
-            movupw.3
-            popw.local.11 # -> holds message schedule msg[44, 45, 46, 47] #
+            exec.prepare_message_schedule
         end
 
         begin
-            exec.prepare_message_schedule
+            exec.wrapper
         end",
     );
 
@@ -1417,25 +672,22 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
-        out_words[60],
-        out_words[61],
-        out_words[62],
-        out_words[63],
-
-        out_words[52],
-        out_words[53],
-        out_words[54],
-        out_words[55],
-
         out_words[56],
         out_words[57],
         out_words[58],
         out_words[59],
-
+        out_words[60],
+        out_words[61],
+        out_words[62],
+        out_words[63],
         out_words[48],
         out_words[49],
         out_words[50],
         out_words[51],
+        out_words[52],
+        out_words[53],
+        out_words[54],
+        out_words[55],
     ]);
 
     assert_eq!(expected_state, last_state);
