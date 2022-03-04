@@ -624,7 +624,39 @@ fn sha256_prepare_message_schedule() {
             popw.mem # write to mem msg[44, 45, 46, 47] #
             pushw.local.4
 
-            exec.reorder_stack_words
+            movupw.3
+            pushw.local.3
+            repeat.3
+                swap
+                drop
+            end
+            storew.mem # write to mem msg[48, 49, 50, 51] #
+
+            movupw.2
+            pushw.local.3
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            storew.mem # write to mem msg[52, 53, 54, 55] #
+
+            movupw.3
+            pushw.local.3
+            drop
+            drop
+            swap
+            drop
+            storew.mem # write to mem msg[56, 57, 58, 59] #
+
+            movupw.3
+            pushw.local.3
+            drop
+            drop
+            drop
+            storew.mem # write to mem msg[60, 61, 62, 63] #
+
+            # stack = [60, 61, 62, 63, 56, 57, 58, 59, 52, 53, 54, 55, 48, 49, 50, 51] #
 
             # --- #
         end
@@ -672,22 +704,25 @@ fn sha256_prepare_message_schedule() {
     prepare_message_schedule(&msg_words, &mut out_words);
 
     let expected_state = convert_to_stack(&[
-        out_words[56],
-        out_words[57],
-        out_words[58],
-        out_words[59],
         out_words[60],
         out_words[61],
         out_words[62],
         out_words[63],
-        out_words[48],
-        out_words[49],
-        out_words[50],
-        out_words[51],
+
+        out_words[56],
+        out_words[57],
+        out_words[58],
+        out_words[59],  
+
         out_words[52],
         out_words[53],
         out_words[54],
         out_words[55],
+
+        out_words[48],
+        out_words[49],
+        out_words[50],
+        out_words[51],
     ]);
 
     assert_eq!(expected_state, last_state);
