@@ -300,6 +300,75 @@ fn sha256_prepare_message_schedule() {
             u32xor
             u32xor
         end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L57-L63 #
+        proc.cap_sigma_0
+            dup
+            u32rotr.2
+
+            swap
+
+            dup
+            u32rotr.13
+
+            swap
+
+            u32rotr.22
+
+            u32xor
+            u32xor
+        end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L65-L71 #
+        proc.cap_sigma_1
+            dup
+            u32rotr.6
+
+            swap
+
+            dup
+            u32rotr.11
+
+            swap
+
+            u32rotr.25
+
+            u32xor
+            u32xor
+        end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L37-L45 #
+        proc.ch
+            swap
+            dup.1
+            u32and
+
+            swap
+            u32not
+
+            movup.2
+            u32and
+
+            u32xor
+        end
+
+        # SHA256 function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L47-L55 #
+        proc.maj
+            dup.1
+            dup.1
+            u32and
+
+            swap
+            dup.3
+            u32and
+
+            movup.2
+            movup.3
+            u32and
+
+            u32xor
+            u32xor
+        end
         
         # assume top 4 elements of stack are [3, 2, 1, 0, ...], then after execution of this function, stack should look like [0, 1, 2, 3, ...] #
         proc.rev_element_order
@@ -630,35 +699,2547 @@ fn sha256_prepare_message_schedule() {
                 swap
                 drop
             end
-            storew.mem # write to mem msg[48, 49, 50, 51] #
+            popw.mem # write to mem msg[48, 49, 50, 51] #
 
-            movupw.2
+            swapw
             pushw.local.3
             drop
             repeat.2
                 swap
                 drop
             end
-            storew.mem # write to mem msg[52, 53, 54, 55] #
+            popw.mem # write to mem msg[52, 53, 54, 55] #
 
-            movupw.3
+            swapw
             pushw.local.3
             drop
             drop
             swap
             drop
-            storew.mem # write to mem msg[56, 57, 58, 59] #
+            popw.mem # write to mem msg[56, 57, 58, 59] #
 
-            movupw.3
             pushw.local.3
             drop
             drop
             drop
-            storew.mem # write to mem msg[60, 61, 62, 63] #
-
-            # stack = [60, 61, 62, 63, 56, 57, 58, 59, 52, 53, 54, 55, 48, 49, 50, 51] #
+            popw.mem # write to mem msg[60, 61, 62, 63] #
 
             # --- #
+        end
+
+        proc.update_hash_state
+            # stack = [a, b, c, d, e, f, g, h,  a, b, c, d, e, f, g, h] #
+
+            movup.15
+            movup.8
+            u32add.unsafe
+            drop # = h #
+
+            movup.14
+            movup.8
+            u32add.unsafe
+            drop # = g #
+
+            movup.13
+            movup.8
+            u32add.unsafe
+            drop # = f #
+
+            movup.12
+            movup.8
+            u32add.unsafe
+            drop # = e #
+
+            movup.11
+            movup.8
+            u32add.unsafe
+            drop # = d #
+
+            movup.10
+            movup.8
+            u32add.unsafe
+            drop # = c #
+
+            movup.9
+            movup.8
+            u32add.unsafe
+            drop # = b #
+
+            movup.8
+            movup.8
+            u32add.unsafe
+            drop # = a #
+
+            # stack = [a, b, c, d, e, f, g, h] #
+        end
+
+        # can be treated same as https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L168-L175 #
+        proc.compute_next_working_variables
+            # stack = [tmp1, tmp0, a, b, c, d, e, f, g, h] #
+
+            movup.8 # = h #
+            movup.8 # = g #
+            movup.8 # = f #
+            dup.4
+            movup.9
+            u32add.unsafe
+            drop # = e #
+            movup.8 # = d #
+            movup.8 # = c #
+            movup.8 # = b #
+            movup.8
+            movup.8
+            u32add.unsafe
+            drop # = a #
+            movup.8
+            drop
+
+            # stack = [a', b', c', d', e', f', g', h'] #
+        end
+
+        # can be translated to https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L144-L187, where single round of SHA256 mixing is performed #
+        proc.mix.4
+            popw.local.0
+            popw.local.1
+            popw.local.2
+            popw.local.3
+            
+            # --- begin iteration t = 0 --- #
+
+            dupw.1
+            dupw.1
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x428a2f98
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 1 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x71374491
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 2 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xb5c0fbcf
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 3 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xe9b5dba5
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 4 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x3956c25b
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 5 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x59f111f1
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 6 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x923f82a4
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 7 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xab1c5ed5
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 8 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xd807aa98
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 9 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x12835b01
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 10 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x243185be
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 11 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x550c7dc3
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 12 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x72be5d74
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 13 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x80deb1fe
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 14 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x9bdc06a7
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 15 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xc19bf174
+            u32add.unsafe
+            drop
+
+            pushw.local.0
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 16 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xe49b69c1
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 17 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xefbe4786
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 18 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x0fc19dc6
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 19 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x240ca1cc
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 20 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x2de92c6f
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 21 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x4a7484aa
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 22 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x5cb0a9dc
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 23 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x76f988da
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 24 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x983e5152
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 25 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xa831c66d
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 26 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xb00327c8
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 27 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xbf597fc7
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 28 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xc6e00bf3
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 29 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xd5a79147
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 30 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x06ca6351
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 31 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x14292967
+            u32add.unsafe
+            drop
+
+            pushw.local.1
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 32 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x27b70a85
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 33 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x2e1b2138
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 34 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x4d2c6dfc
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 35 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x53380d13
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 36 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x650a7354
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 37 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x766a0abb
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 38 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x81c2c92e
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 39 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x92722c85
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 40 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xa2bfe8a1
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 41 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xa81a664b
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 42 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xc24b8b70
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 43 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xc76c51a3
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 44 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xd192e819
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 45 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xd6990624
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 46 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xf40e3585
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 47 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x106aa070
+            u32add.unsafe
+            drop
+
+            pushw.local.2
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 48 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x19a4c116
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 49 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x1e376c08
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 50 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x2748774c
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 51 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x34b0bcb5
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            repeat.3
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 52 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x391c0cb3
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 53 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x4ed8aa4a
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 54 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x5b9cca4f
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 55 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x682e6ff3
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            repeat.2
+                swap
+                drop
+            end
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 56 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x748f82ee
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 57 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x78a5636f
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 58 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x84c87814
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 59 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x8cc70208
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            swap
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 60 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0x90befffa
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            drop
+            pushw.mem
+            repeat.3
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 61 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xa4506ceb
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            repeat.2
+                swap
+                drop
+            end
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 62 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xbef9a3f7
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            swap
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            # --- begin iteration t = 63 --- #
+
+            dupw.1
+            exec.ch
+            u32add.unsafe
+            drop
+            dup.5
+            exec.cap_sigma_1
+            u32add.unsafe
+            drop
+            push.0xc67178f2
+            u32add.unsafe
+            drop
+
+            pushw.local.3
+            drop
+            drop
+            drop
+            pushw.mem
+            drop
+            drop
+            drop
+
+            u32add.unsafe
+            drop
+
+            dupw
+            drop
+            exec.maj
+            dup.2
+            exec.cap_sigma_0
+            u32add.unsafe
+            drop
+
+            exec.compute_next_working_variables
+
+            exec.update_hash_state
         end
 
         proc.wrapper.16
@@ -683,6 +3264,32 @@ fn sha256_prepare_message_schedule() {
             push.env.locaddr.0
 
             exec.prepare_message_schedule
+
+            # SHA256 initial hash values https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L15-L20 #
+            push.0x5be0cd19.0x1f83d9ab.0x9b05688c.0x510e527f
+            push.0xa54ff53a.0x3c6ef372.0xbb67ae85.0x6a09e667
+
+            push.env.locaddr.15
+            push.env.locaddr.14
+            push.env.locaddr.13
+            push.env.locaddr.12
+
+            push.env.locaddr.11
+            push.env.locaddr.10
+            push.env.locaddr.9
+            push.env.locaddr.8
+
+            push.env.locaddr.7
+            push.env.locaddr.6
+            push.env.locaddr.5
+            push.env.locaddr.4
+
+            push.env.locaddr.3
+            push.env.locaddr.2
+            push.env.locaddr.1
+            push.env.locaddr.0
+
+            exec.mix
         end
 
         begin
@@ -702,30 +3309,16 @@ fn sha256_prepare_message_schedule() {
 
     let mut out_words = [0; STACK_TOP_SIZE << 2];
     prepare_message_schedule(&msg_words, &mut out_words);
+    let mut hash_state = [
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+        0x5be0cd19,
+    ];
+    mix(&mut hash_state, &out_words, 64);
 
-    let expected_state = convert_to_stack(&[
-        out_words[60],
-        out_words[61],
-        out_words[62],
-        out_words[63],
-
-        out_words[56],
-        out_words[57],
-        out_words[58],
-        out_words[59],  
-
-        out_words[52],
-        out_words[53],
-        out_words[54],
-        out_words[55],
-
-        out_words[48],
-        out_words[49],
-        out_words[50],
-        out_words[51],
-    ]);
-
-    assert_eq!(expected_state, last_state);
+    // check only top 8 elements of stack
+    for i in 0..8 {
+        assert_eq!(Felt::new(hash_state[i]), last_state[i]);
+    }
 }
 
 // HELPER FUNCTIONS
@@ -909,4 +3502,56 @@ fn prepare_message_schedule(in_words: &[u64], out_words: &mut [u64]) {
 
         out_words[i] = t0.wrapping_add(t1) as u64;
     }
+}
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L20-L35
+const K: [u64; 64] = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+];
+
+/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L148-L187
+fn mix(hash_state: &mut [u64], msg_schld: &[u64], rounds: usize) {
+    assert_eq!(rounds >= 1 && rounds <= 64, true);
+
+    let mut a = hash_state[0];
+    let mut b = hash_state[1];
+    let mut c = hash_state[2];
+    let mut d = hash_state[3];
+    let mut e = hash_state[4];
+    let mut f = hash_state[5];
+    let mut g = hash_state[6];
+    let mut h = hash_state[7];
+
+    for t in 0..rounds {
+        let tmp0 = (h as u32)
+            .wrapping_add(cap_sigma_1(e as u32))
+            .wrapping_add(ch(e as u32, f as u32, g as u32))
+            .wrapping_add(K[t] as u32)
+            .wrapping_add(msg_schld[t] as u32);
+        let tmp1 = cap_sigma_0(a as u32).wrapping_add(maj(a as u32, b as u32, c as u32));
+        h = g;
+        g = f;
+        f = e;
+        e = (d as u32).wrapping_add(tmp0) as u64;
+        d = c;
+        c = b;
+        b = a;
+        a = tmp0.wrapping_add(tmp1) as u64;
+    }
+
+    hash_state[0] = (hash_state[0] as u32).wrapping_add(a as u32) as u64;
+    hash_state[1] = (hash_state[1] as u32).wrapping_add(b as u32) as u64;
+    hash_state[2] = (hash_state[2] as u32).wrapping_add(c as u32) as u64;
+    hash_state[3] = (hash_state[3] as u32).wrapping_add(d as u32) as u64;
+    hash_state[4] = (hash_state[4] as u32).wrapping_add(e as u32) as u64;
+    hash_state[5] = (hash_state[5] as u32).wrapping_add(f as u32) as u64;
+    hash_state[6] = (hash_state[6] as u32).wrapping_add(g as u32) as u64;
+    hash_state[7] = (hash_state[7] as u32).wrapping_add(h as u32) as u64;
 }
