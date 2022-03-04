@@ -1,6 +1,8 @@
 use super::{execute, Felt, FieldElement, ProgramInputs, Script, STACK_TOP_SIZE};
 use crate::Word;
 use proptest::prelude::*;
+use rand::Rng;
+use sha2::{Digest, Sha256};
 
 mod aux_table_trace;
 mod crypto_ops;
@@ -3241,8 +3243,9 @@ fn sha256_prepare_message_schedule() {
 
             exec.update_hash_state
         end
-
-        proc.wrapper.16
+        
+        # Computes SHA256 2-to-1 hash function; see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L121-L196 #
+        proc.sha256.16
             push.env.locaddr.15
             push.env.locaddr.14
             push.env.locaddr.13
@@ -3290,34 +3293,100 @@ fn sha256_prepare_message_schedule() {
             push.env.locaddr.0
 
             exec.mix
+
+            # see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L89-L99 #
+            push.0x200.0x0.0x0.0x0
+            push.0x0.0x0.0x0.0x0
+            push.0x0.0x0.0x0.0x0
+            push.0x0.0x0.0x0.0x80000000
+
+            push.env.locaddr.15
+            push.env.locaddr.14
+            push.env.locaddr.13
+            push.env.locaddr.12
+
+            push.env.locaddr.11
+            push.env.locaddr.10
+            push.env.locaddr.9
+            push.env.locaddr.8
+
+            push.env.locaddr.7
+            push.env.locaddr.6
+            push.env.locaddr.5
+            push.env.locaddr.4
+
+            push.env.locaddr.3
+            push.env.locaddr.2
+            push.env.locaddr.1
+            push.env.locaddr.0
+
+            exec.prepare_message_schedule
+
+            push.env.locaddr.15
+            push.env.locaddr.14
+            push.env.locaddr.13
+            push.env.locaddr.12
+
+            push.env.locaddr.11
+            push.env.locaddr.10
+            push.env.locaddr.9
+            push.env.locaddr.8
+
+            push.env.locaddr.7
+            push.env.locaddr.6
+            push.env.locaddr.5
+            push.env.locaddr.4
+
+            push.env.locaddr.3
+            push.env.locaddr.2
+            push.env.locaddr.1
+            push.env.locaddr.0
+
+            exec.mix
         end
 
         begin
-            exec.wrapper
+            exec.sha256
         end",
     );
 
-    let in_words = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    // prepare random input byte array
+    let mut rng = rand::thread_rng();
+    let mut i_bytes = [0; STACK_TOP_SIZE << 2];
 
-    let inputs = ProgramInputs::new(&in_words, &[], vec![]).unwrap();
+    for i in 0..(STACK_TOP_SIZE << 2) {
+        i_bytes[i] = rng.gen::<u8>();
+    }
+
+    // allocate space on stack so that bytes can be converted to sha256 words
+    let mut i_words = [0u64; STACK_TOP_SIZE];
+
+    // convert each of four consecutive big endian bytes (of input) to blake3 words
+    for i in 0..STACK_TOP_SIZE {
+        i_words[i] = from_be_bytes_to_words(&i_bytes[i * 4..(i + 1) * 4]) as u64;
+    }
+    i_words.reverse();
+
+    let mut hasher = Sha256::new();
+    hasher.update(&i_bytes);
+    let digest = hasher.finalize();
+
+    // prepare digest in desired sha256 word form so that assertion writing becomes easier
+    let mut digest_words = [0u64; STACK_TOP_SIZE >> 1];
+    // convert each of four consecutive big endian bytes (of digest) to sha256 words
+    for i in 0..(STACK_TOP_SIZE >> 1) {
+        digest_words[i] = from_be_bytes_to_words(&digest[i * 4..(i + 1) * 4]) as u64;
+    }
+
+    // finally execute miden program on VM
+    let inputs = ProgramInputs::new(&i_words, &[], Vec::new()).unwrap();
     let trace = super::execute(&script, &inputs).unwrap();
-
     let last_state = trace.last_stack_state();
 
-    let mut msg_words = in_words;
-    msg_words.reverse();
-
-    let mut out_words = [0; STACK_TOP_SIZE << 2];
-    prepare_message_schedule(&msg_words, &mut out_words);
-    let mut hash_state = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
-        0x5be0cd19,
-    ];
-    mix(&mut hash_state, &out_words, 64);
-
-    // check only top 8 elements of stack
-    for i in 0..8 {
-        assert_eq!(Felt::new(hash_state[i]), last_state[i]);
+    // and assert top 8 elements of stack, because they're holding 32 -bytes wide
+    // sha256 digest
+    for i in 0..(STACK_TOP_SIZE >> 1) {
+        assert_eq!(Felt::new(digest_words[i]), last_state[i]);
     }
 }
 
@@ -3490,68 +3559,10 @@ fn maj(x: u32, y: u32, z: u32) -> u32 {
     (x & y) ^ (x & z) ^ (y & z)
 }
 
-/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L89-L113
-fn prepare_message_schedule(in_words: &[u64], out_words: &mut [u64]) {
-    for i in 0..16 {
-        out_words[i] = in_words[i];
-    }
-
-    for i in 16..64 {
-        let t0 = small_sigma_1(out_words[i - 2] as u32).wrapping_add(out_words[i - 7] as u32);
-        let t1 = small_sigma_0(out_words[i - 15] as u32).wrapping_add(out_words[i - 16] as u32);
-
-        out_words[i] = t0.wrapping_add(t1) as u64;
-    }
-}
-
-/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2.hpp#L20-L35
-const K: [u64; 64] = [
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
-];
-
-/// Taken from https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L148-L187
-fn mix(hash_state: &mut [u64], msg_schld: &[u64], rounds: usize) {
-    assert_eq!(rounds >= 1 && rounds <= 64, true);
-
-    let mut a = hash_state[0];
-    let mut b = hash_state[1];
-    let mut c = hash_state[2];
-    let mut d = hash_state[3];
-    let mut e = hash_state[4];
-    let mut f = hash_state[5];
-    let mut g = hash_state[6];
-    let mut h = hash_state[7];
-
-    for t in 0..rounds {
-        let tmp0 = (h as u32)
-            .wrapping_add(cap_sigma_1(e as u32))
-            .wrapping_add(ch(e as u32, f as u32, g as u32))
-            .wrapping_add(K[t] as u32)
-            .wrapping_add(msg_schld[t] as u32);
-        let tmp1 = cap_sigma_0(a as u32).wrapping_add(maj(a as u32, b as u32, c as u32));
-        h = g;
-        g = f;
-        f = e;
-        e = (d as u32).wrapping_add(tmp0) as u64;
-        d = c;
-        c = b;
-        b = a;
-        a = tmp0.wrapping_add(tmp1) as u64;
-    }
-
-    hash_state[0] = (hash_state[0] as u32).wrapping_add(a as u32) as u64;
-    hash_state[1] = (hash_state[1] as u32).wrapping_add(b as u32) as u64;
-    hash_state[2] = (hash_state[2] as u32).wrapping_add(c as u32) as u64;
-    hash_state[3] = (hash_state[3] as u32).wrapping_add(d as u32) as u64;
-    hash_state[4] = (hash_state[4] as u32).wrapping_add(e as u32) as u64;
-    hash_state[5] = (hash_state[5] as u32).wrapping_add(f as u32) as u64;
-    hash_state[6] = (hash_state[6] as u32).wrapping_add(g as u32) as u64;
-    hash_state[7] = (hash_state[7] as u32).wrapping_add(h as u32) as u64;
+/// Takes four consecutive big endian bytes and interprets them as a SHA256 word
+fn from_be_bytes_to_words(be_bytes: &[u8]) -> u32 {
+    ((be_bytes[0] as u32) << 24)
+        | ((be_bytes[1] as u32) << 16)
+        | ((be_bytes[2] as u32) << 8)
+        | ((be_bytes[3] as u32) << 0)
 }
