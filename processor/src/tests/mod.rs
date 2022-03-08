@@ -1,14 +1,13 @@
 use super::{execute, Felt, FieldElement, ProgramInputs, Script, STACK_TOP_SIZE};
 use crate::Word;
 use proptest::prelude::*;
-use rand::Rng;
-use sha2::{Digest, Sha256};
 
 mod aux_table_trace;
 mod crypto_ops;
 mod field_ops;
 mod flow_control;
 mod io_ops;
+mod stdlib;
 mod u32_ops;
 
 // TESTS
@@ -24,57 +23,6 @@ fn simple_program() {
     let last_state = trace.last_stack_state();
     let expected_state = convert_to_stack(&[3]);
     assert_eq!(expected_state, last_state);
-}
-
-#[test]
-fn sha256_2_to_1_hash() {
-    let script = compile(
-        "
-        use.std::crypto::hashes::sha256
-
-        begin
-            exec.sha256::hash
-        end",
-    );
-
-    // prepare random input byte array
-    let mut rng = rand::thread_rng();
-    let mut i_bytes = [0; STACK_TOP_SIZE << 2];
-
-    for i in 0..(STACK_TOP_SIZE << 2) {
-        i_bytes[i] = rng.gen::<u8>();
-    }
-
-    // allocate space on stack so that bytes can be converted to sha256 words
-    let mut i_words = [0u64; STACK_TOP_SIZE];
-
-    // convert each of four consecutive big endian bytes (of input) to blake3 words
-    for i in 0..STACK_TOP_SIZE {
-        i_words[i] = from_be_bytes_to_words(&i_bytes[i * 4..(i + 1) * 4]) as u64;
-    }
-    i_words.reverse();
-
-    let mut hasher = Sha256::new();
-    hasher.update(&i_bytes);
-    let digest = hasher.finalize();
-
-    // prepare digest in desired sha256 word form so that assertion writing becomes easier
-    let mut digest_words = [0u64; STACK_TOP_SIZE >> 1];
-    // convert each of four consecutive big endian bytes (of digest) to sha256 words
-    for i in 0..(STACK_TOP_SIZE >> 1) {
-        digest_words[i] = from_be_bytes_to_words(&digest[i * 4..(i + 1) * 4]) as u64;
-    }
-
-    // finally execute miden program on VM
-    let inputs = ProgramInputs::new(&i_words, &[], Vec::new()).unwrap();
-    let trace = super::execute(&script, &inputs).unwrap();
-    let last_state = trace.last_stack_state();
-
-    // and assert top 8 elements of stack, because they're holding 32 -bytes wide
-    // sha256 digest
-    for i in 0..(STACK_TOP_SIZE >> 1) {
-        assert_eq!(Felt::new(digest_words[i]), last_state[i]);
-    }
 }
 
 // HELPER FUNCTIONS
@@ -202,12 +150,4 @@ fn test_param_out_of_bounds(asm_op_base: &str, gt_max_value: u64) {
 // This is a proptest strategy for generating a random word with 4 values of type T.
 fn rand_word<T: proptest::arbitrary::Arbitrary>() -> impl Strategy<Value = Vec<T>> {
     prop::collection::vec(any::<T>(), 4)
-}
-
-/// Takes four consecutive big endian bytes and interprets them as a SHA256 word
-fn from_be_bytes_to_words(be_bytes: &[u8]) -> u32 {
-    ((be_bytes[0] as u32) << 24)
-        | ((be_bytes[1] as u32) << 16)
-        | ((be_bytes[2] as u32) << 8)
-        | ((be_bytes[3] as u32) << 0)
 }
