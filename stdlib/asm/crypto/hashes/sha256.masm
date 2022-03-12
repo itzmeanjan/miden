@@ -3032,33 +3032,45 @@ export.hash.16
 
     exec.mix
 
-    # see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L89-L99 #
-    push.0x200.0x0.0x0.0x0
-    push.0x0.0x0.0x0.0x0
-    push.0x0.0x0.0x0.0x0
-    push.0x0.0x0.0x0.0x80000000
-
-    push.env.locaddr.15
-    push.env.locaddr.14
-    push.env.locaddr.13
-    push.env.locaddr.12
-
-    push.env.locaddr.11
-    push.env.locaddr.10
-    push.env.locaddr.9
-    push.env.locaddr.8
-
-    push.env.locaddr.7
-    push.env.locaddr.6
-    push.env.locaddr.5
-    push.env.locaddr.4
-
-    push.env.locaddr.3
-    push.env.locaddr.2
-    push.env.locaddr.1
-    push.env.locaddr.0
-
-    exec.prepare_message_schedule
+    # precompute message schedule for compile-time known 512 -bytes padding 
+    words ( see https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L89-L99 ),
+    i.e. 64 sha256 words.
+    
+    message schedule computation happens in https://github.com/itzmeanjan/merklize-sha/blob/8a2c006a2ffe1e6e8e36b375bc5a570385e9f0f2/include/sha2_256.hpp#L144-L146,
+    note in following section, I'm precomputing message schedule for iteration `i = 1` ( see last hyperlink )
+    #
+    push.0.0.0.2147483648
+    popw.local.0
+    push.0.0.0.0
+    popw.local.1
+    push.0.0.0.0
+    popw.local.2
+    push.512.0.0.0
+    popw.local.3
+    push.20616.2117632.20971520.2147483648
+    popw.local.4
+    push.2684354592.84449090.575995924.570427392
+    popw.local.5
+    push.4202700544.1496221.6067200.1518862336
+    popw.local.6
+    push.3003913545.4142317530.291985753.3543279056
+    popw.local.7
+    push.2296832490.216179603.2642168871.145928272
+    popw.local.8
+    push.1324035729.3610378607.1738633033.2771075893
+    popw.local.9
+    push.2822718356.3803995842.2397971253.1572820453
+    popw.local.10
+    push.2958106055.3650881000.921948365.1168996599
+    popw.local.11
+    push.991993842.3820646885.3172022107.1773959876
+    popw.local.12
+    push.85264541.322392134.3797604839.419360279
+    popw.local.13
+    push.3328750644.822159570.640108622.1326255876
+    popw.local.14
+    push.2242356356.3852183409.1657999800.1107837388
+    popw.local.15
 
     push.env.locaddr.15
     push.env.locaddr.14
