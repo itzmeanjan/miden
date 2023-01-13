@@ -1,3 +1,5 @@
+> **Warning** **I've stopped maintaining this fork of `miden`**
+
 # Polygon Miden
 
 <a href="https://github.com/maticnetwork/miden/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
